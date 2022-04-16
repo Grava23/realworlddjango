@@ -1,69 +1,127 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
-
 
 class Category(models.Model):
-    title = models.CharField(max_length=90, verbose_name='Категория', default='')
+    title = models.CharField(max_length=90, default='', verbose_name='Категория')
 
-    class Meta:
-        verbose_name_plural = 'Категории'
-        verbose_name = 'Категория'
+    def display_event_count(self):
+        return self.events.count()
+    display_event_count.short_description = 'Количество событий'
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
 
 class Feature(models.Model):
-    title = models.CharField(max_length=200, verbose_name='Характераня черта', default='')
-
-    class Meta:
-        verbose_name_plural = 'Характерные черты'
-        verbose_name = 'Характерная черта'
+    title = models.CharField(max_length=90, default='', verbose_name='Свойство')
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        verbose_name = 'Свойство события'
+        verbose_name_plural = 'Свойства события'
 
 
 class Event(models.Model):
-    title = models.CharField(max_length=200, verbose_name='Название', default='')
-    description = models.TextField(verbose_name='Описание', default='')
+    FULLNESS_FREE = '1'
+    FULLNESS_MIDDLE = '2'
+    FULLNESS_FULL = '3'
+    FULLNESS_LEGEND_FREE = '<= 50%'
+    FULLNESS_LEGEND_MIDDLE = '> 50%'
+    FULLNESS_LEGEND_FULL = 'sold-out'
+    FULLNESS_VARIANTS = (
+        (FULLNESS_FREE, FULLNESS_LEGEND_FREE),
+        (FULLNESS_MIDDLE, FULLNESS_LEGEND_MIDDLE),
+        (FULLNESS_FULL, FULLNESS_LEGEND_FULL),
+    )
+
+    title = models.CharField(max_length=200, default='', verbose_name='Название')
+    description = models.TextField(default='', verbose_name='Описание')
     date_start = models.DateTimeField(verbose_name='Дата начала')
-    participants_number = models.PositiveSmallIntegerField(verbose_name='Количество участников', default=0)
-    is_private = models.BooleanField(verbose_name='Частное', default=False)
-    category = models.ForeignKey(Category, verbose_name='Категория', default='')
-    features = models.ManyToManyFieldtoFeature(Feature)
+    participants_number = models.PositiveSmallIntegerField(default=0, verbose_name='Количество участников')
+    is_private = models.BooleanField(default=False, verbose_name='Частное')
+    category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.CASCADE, related_name='events')
+    features = models.ManyToManyField(Feature, blank=True)
 
     class Meta:
-        verbose_name_plural = 'События'
         verbose_name = 'Событие'
+        verbose_name_plural = 'События'
 
     def __str__(self):
         return self.title
 
+    def get_enroll_count(self):
+        """
+        Return number of enrolls for this event.
+        """
+        return self.enrolls.count()
+
+    def get_places_left(self):
+        """
+        Return number of free places for this event.
+        """
+        return int(self.participants_number or 0) - self.get_enroll_count()
+
+    def get_fullness_legend(self, **kwargs):
+        """
+        Return legend for event's places_left.
+        Legend is in the FULLNESS_VARIANTS.
+
+        kwargs may contain the following parameters:
+        `places_left`: number of free places for this event (to avoid additional query)
+        """
+        legend = ''
+        if int(self.participants_number or 0) > 0:
+            legend = Event.FULLNESS_LEGEND_FREE
+            places_left = kwargs.get('places_left', None)
+            if places_left is None:
+                places_left = self.get_places_left()
+            if places_left == 0:
+                legend = Event.FULLNESS_LEGEND_FULL
+            elif places_left < self.participants_number / 2:
+                legend = Event.FULLNESS_LEGEND_MIDDLE
+        return legend
+
+    def display_enroll_count(self):
+        return self.get_enroll_count()
+    display_enroll_count.short_description = 'Количество записей'
+
+    def display_places_left(self):
+        places_left = self.get_places_left()
+        return f'{places_left} ({self.get_fullness_legend(places_left=places_left)})'
+    display_places_left.short_description = 'Осталось мест'
+
 
 class Enroll(models.Model):
-    user = models.ForeignKey(User, null=True)
-    event = models.ForeignKey(Event, null=True)
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    text = models.TextField(verbose_name='текст отзыва', default='')
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='enrolls')
+    event = models.ForeignKey(Event, null=True, on_delete=models.CASCADE, related_name='enrolls')
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.event.title} - {self.user}'
 
     class Meta:
-        verbose_name_plural = 'записи на события'
-        verbose_name = 'запись на событие'
+        verbose_name = 'Запись на событие'
+        verbose_name_plural = 'Записи на событие'
 
-    # def __str__(self):
-    #     return self.title
 
-class  Review(models.Model):
-    user = models.ForeignKey(User, null=True)
-    event = models.ForeignKey(Event, null=True)
-    rate = models.PositiveSmallIntegerField(null=True)
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+class Review(models.Model):
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='reviews')
+    event = models.ForeignKey(Event, null=True, on_delete=models.CASCADE, related_name='reviews')
+    rate = models.PositiveSmallIntegerField(default=0)
+    text = models.TextField(max_length=1000, default='')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.user} - {self.rate} - {self.event.title}'
 
     class Meta:
-        verbose_name_plural = 'отзывы на события'
-        verbose_name = 'отзывы на событие'
-
+        verbose_name = 'Отзыв на событие'
+        verbose_name_plural = 'Отзывы на события'
