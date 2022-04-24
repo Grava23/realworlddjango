@@ -43,7 +43,7 @@ class Event(models.Model):
 
     title = models.CharField(max_length=200, default='', verbose_name='Название')
     description = models.TextField(default='', verbose_name='Описание')
-    date_start = models.DateTimeField(verbose_name='Дата начала')
+    date_start = models.DateTimeField(verbose_name='Дата начала', auto_now=True)
     participants_number = models.PositiveSmallIntegerField(default=0, verbose_name='Количество участников')
     is_private = models.BooleanField(default=False, verbose_name='Частное')
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.CASCADE, related_name='events')
@@ -125,3 +125,4 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв на событие'
         verbose_name_plural = 'Отзывы на события'
+

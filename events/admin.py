@@ -80,3 +80,4 @@ class ReviewAdmin(admin.ModelAdmin):
     list_select_related = ['user', 'event', ]
     fields = ['user', 'event', 'rate', 'text', ('created', 'updated'), 'id']
     readonly_fields = ['created', 'updated', 'id', ]
+
