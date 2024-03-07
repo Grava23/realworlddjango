@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
+from django.conf import settings
 
 
 class Category(models.Model):
@@ -47,7 +49,16 @@ class Event(models.Model):
     participants_number = models.PositiveSmallIntegerField(default=0, verbose_name='Количество участников')
     is_private = models.BooleanField(default=False, verbose_name='Частное')
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.CASCADE, related_name='events')
-    features = models.ManyToManyField(Feature, blank=True)
+    features = models.ManyToManyField(Feature, related_name='events')
+    logo = models.ImageField(upload_to='events/list/', blank=True, null=True)
+
+    @property
+    def logo_url(self):
+        return self.logo.url if self.logo else f'{settings.STATIC_URL}images/svg-icon/event.svg'
+#   logo = models.ImageField(upload_to=get_upload_to_auto, blank=True, null=True)
+
+    def get_absolute_url(self):
+        return reverse('events:event_detail', args=[str(self.pk)])
 
     class Meta:
         verbose_name = 'Событие'
@@ -55,6 +66,25 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+    def display_features(self):
+        return ', '.join([feature.title for feature in self.features.all()])
+    display_features.short_description = 'features'
+
+    def rate(self, reviews):
+        list_review = []
+        count = 0
+        for review in reviews:
+            list_review.append(review.rate)
+            count = count + review.rate
+        if len(list_review) == 0:
+            rate = 0
+        else:
+            rate = count / len(list_review)
+        #    Считается как среднее значение поля rate среди всех отзывов (модель Review),
+        #    связанных с данным событием. Значение должно быть округлено до 1 знака после запятой
+
+        return round(rate, 1)
 
     def get_enroll_count(self):
         """
