@@ -2,6 +2,10 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser, Group, Permission, PermissionsMixin
+from django.core.validators import FileExtensionValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Category(models.Model):
@@ -45,12 +49,13 @@ class Event(models.Model):
 
     title = models.CharField(max_length=200, default='', verbose_name='Название')
     description = models.TextField(default='', verbose_name='Описание')
-    date_start = models.DateTimeField(verbose_name='Дата начала', auto_now=True)
+    date_start = models.DateTimeField(verbose_name='Дата начала')
     participants_number = models.PositiveSmallIntegerField(default=0, verbose_name='Количество участников')
     is_private = models.BooleanField(default=False, verbose_name='Частное')
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.CASCADE, related_name='events')
     features = models.ManyToManyField(Feature, related_name='events')
     logo = models.ImageField(upload_to='events/list/', blank=True, null=True)
+
 
     @property
     def logo_url(self):
@@ -128,19 +133,6 @@ class Event(models.Model):
     display_places_left.short_description = 'Осталось мест'
 
 
-class Enroll(models.Model):
-    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='enrolls')
-    event = models.ForeignKey(Event, null=True, on_delete=models.CASCADE, related_name='enrolls')
-    created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'{self.event.title} - {self.user}'
-
-    class Meta:
-        verbose_name = 'Запись на событие'
-        verbose_name_plural = 'Записи на событие'
-
-
 class Review(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='reviews')
     event = models.ForeignKey(Event, null=True, on_delete=models.CASCADE, related_name='reviews')
@@ -155,4 +147,68 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв на событие'
         verbose_name_plural = 'Отзывы на события'
+
+
+class Enroll(models.Model):
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE, related_name='enrolls')
+    event = models.ForeignKey(Event, null=True, on_delete=models.CASCADE, related_name='enrolls')
+    created = models.DateTimeField(auto_now_add=True)
+    review = models.OneToOneField(Review, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return f'{self.event.title} - {self.user}'
+
+    class Meta:
+        verbose_name = 'Запись на событие'
+        verbose_name_plural = 'Записи на событие'
+
+
+class CustomUser(AbstractUser):
+    avatar = models.ImageField(
+        upload_to='avatars/',
+        default='avatars/default_avatar.png',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    password = models.CharField(max_length=128, default='default_password_value')
+    groups = models.ManyToManyField(Group, db_table='events_customuser_groups')
+    user_permissions = models.ManyToManyField(Permission, related_name='customuser_set')
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
+    is_superuser = models.BooleanField(default=False)
+    first_name = models.CharField(max_length=30, blank=True)
+
+    def get_absolute_url(self):
+        return reverse('user_detail', args=[str(self.pk)])
+
+    @receiver(post_save, sender=User)
+    def update_custom_user(sender, instance, **kwargs):
+        custom_user, created = CustomUser.objects.get_or_create(user=instance)
+        custom_user.username = instance.username
+        custom_user.email = instance.email
+        custom_user.save()
+
+    def delete(self, *args, **kwargs):
+        if self.user:
+            self.user.delete()
+
+        super().delete(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+
+class Subscriber(models.Model):
+    subscriber_email = models.EmailField(default='')
+    recipient_email = models.EmailField(default='')
+    created_at = models.DateTimeField(auto_now=True)
+    counter = models.IntegerField(default=0)
+    letter_count = models.IntegerField(default=0)
+    sent_letter_count = models.IntegerField(default=0)  # Добавляем поле sent_letter_count
+    counter = models.IntegerField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.subscriber_email
+
 

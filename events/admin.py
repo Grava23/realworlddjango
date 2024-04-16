@@ -1,5 +1,7 @@
-from django.contrib import admin
+
 from . import models
+from django.contrib import admin
+from .models import CustomUser
 
 
 @admin.register(models.Category)
@@ -54,15 +56,24 @@ class ReviewInstanceInline(admin.TabularInline):
 @admin.register(models.Event)
 class EventAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'category', 'date_start', 'is_private',
-                    'participants_number', 'display_enroll_count', 'display_places_left', ]
-    list_display_links = ['id', 'title', ]
+                    'participants_number', 'display_enroll_count', 'display_places_left']
+    list_display_links = ['id', 'title']
     list_select_related = ['category']
-    list_filter = [FullnessFilter, 'category', 'features', ]
-    ordering = ['date_start', ]
-    filter_horizontal = ['features', ]
-    readonly_fields = ['display_enroll_count', 'display_places_left', ]
-    search_fields = ['title', ]
-    inlines = [ReviewInstanceInline]
+    list_filter = ['category', 'features']
+    ordering = ['-date_start']  # Сортировка по убыванию даты начала
+    filter_horizontal = ['features']
+    readonly_fields = ['display_enroll_count', 'display_places_left']
+    search_fields = ['title']
+    inlines = [ReviewInstanceInline]  # Добавляем инлайн для отображения пользователей
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'description', 'date_start', 'participants_number', 'is_private')
+        }),
+        ('Advanced options', {
+            'classes': ('collapse',),
+            'fields': ('category', 'features', 'logo')
+        }),
+    )
 
 
 @admin.register(models.Enroll)
@@ -81,3 +92,14 @@ class ReviewAdmin(admin.ModelAdmin):
     fields = ['user', 'event', 'rate', 'text', ('created', 'updated'), 'id']
     readonly_fields = ['created', 'updated', 'id', ]
 
+
+@admin.register(models.CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'first_name', 'is_staff', 'avatar')
+    search_fields = ('username', 'email')
+    readonly_fields = ('avatar',)
+    fieldsets = (
+        (None, {'fields': ('username', 'email', 'password')}),
+        ('Personal Info', {'fields': ('first_name', 'last_name', 'avatar')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+    )

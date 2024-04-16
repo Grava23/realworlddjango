@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-    <title>Real World Django - редактирование события Субботник во вторник</title>
+    <title>Real World Django - редактирование события {{event.title}}</title>
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
@@ -19,30 +19,36 @@
 <div class="vertical-layout">
 
     <!-- Start LEFT_MENU -->
-    <div class="leftbar">
-        <div class="logobar">
-            <a href="{% url 'events:event_list' %}" class="logo logo-large">
-                <img src="{% static 'images/svg-icon/logo.svg' %}" alt="logo" style="height: 40px">
-            </a>
+        <div class="leftbar">
+            <div class="logobar">
+                <a href="{% url 'events:index' %}" class="logo logo-large">
+                    <img src="{% static 'images/svg-icon/logo.svg' %}" alt="logo" style="height: 40px">
+                </a>
+            </div>
+            <ul class="vertical-menu" id="vertical-menu">
+                <li class="vertical-menu-item">
+                    <span>Главное</span>
+                    <ul class="vertical-submenu">
+                        <li><a href="{% url 'events:event_list' %}">События</a></li>
+                        {% if request.user.is_authenticated %}
+                        <li><a href="{% url 'events:mail' %}">Подписчики</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                <li class="vertical-menu-item">
+                    <span>Аккаунт</span>
+                    <ul class="vertical-submenu">
+                        {% if request.user.is_authenticated %}
+                        <li><a href="{% url 'events:profile'  %}">Мой аккаунт</a></li>
+                        <li><a href="{% url 'events:change_password'  %}">Изменить пароль</a></li>
+                        <li><a href="{% url 'events:password_reset'  %}">Сбросить пароль</a></li>
+                        {% else %}
+                        <li><a href="{% url 'events:login' %}" class="btn btn-outline-primary">Войти</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+            </ul>
         </div>
-        <ul class="vertical-menu" id="vertical-menu">
-            <li class="vertical-menu-item">
-                <span>Главное</span>
-                <ul class="vertical-submenu">
-                    <li><a href="{% url 'events:event_list' %}">События</a></li>
-                    <li><a href="mail.html">Подписчики</a></li>
-                </ul>
-            </li>
-            <li class="vertical-menu-item">
-                <span>Аккаунт</span>
-                <ul class="vertical-submenu">
-                    <li><a href="profile.html">Мой аккаунт</a></li>
-                    <li><a href="#">Изменить пароль</a></li>
-                    <li><a href="#">Сбросить пароль</a></li>
-                </ul>
-            </li>
-        </ul>
-    </div>
     <!-- menu for mobile -->
     <div class="topbar-mobile">
         <div class="row align-items-center">

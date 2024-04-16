@@ -24,7 +24,7 @@
     <!-- Start LEFT_MENU -->
     <div class="leftbar">
         <div class="logobar">
-            <a href="{% url 'events:event_list' %}" class="logo logo-large">
+            <a href="{% url 'events:index' %}" class="logo logo-large">
                 <img src="{% static 'images/svg-icon/logo.svg' %}" alt="logo" style="height: 40px">
             </a>
         </div>
@@ -32,16 +32,22 @@
             <li class="vertical-menu-item">
                 <span>Главное</span>
                 <ul class="vertical-submenu">
-                    <li><a href="{% url 'events:event_list' %}">События</a></li>
-                    <li><a href="mail.html">Подписчики</a></li>
+                    <li><a href="{% url 'events:index' %}">На главную</a></li>
+                    {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'events:mail' %}">Подписчики</a></li>
+                    {% endif %}
                 </ul>
             </li>
             <li class="vertical-menu-item">
                 <span>Аккаунт</span>
                 <ul class="vertical-submenu">
-                    <li><a href="profile.html">Мой аккаунт</a></li>
-                    <li><a href="#">Изменить пароль</a></li>
-                    <li><a href="#">Сбросить пароль</a></li>
+                    {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'events:profile'  %}">Мой аккаунт</a></li>
+                    <li><a href="{% url 'events:change_password'  %}">Изменить пароль</a></li>
+                    <li><a href="{% url 'events:password_reset'  %}">Сбросить пароль</a></li>
+                    {% else %}
+                    <li><a href="{% url 'events:login' %}" class="btn btn-outline-primary">Войти</a></li>
+                    {% endif %}
                 </ul>
             </li>
         </ul>
@@ -51,7 +57,7 @@
         <div class="row align-items-center">
             <div class="col-md-12">
                 <div class="mobile-logobar" style="max-width: 40px">
-                    <a href="#" class="mobile-logo">
+                    <a href="{% url 'events:index' %}" class="mobile-logo">
                         <img src="{% static 'images/svg-icon/logo.svg' %}" class="img-fluid" alt="logo">
                     </a>
                 </div>
@@ -87,7 +93,11 @@
                     <h4>События</h4>
                 </div>
                 <div class="col-auto text-center me-4">
-                    <a href="{% url 'events:event_create'  %}" class="btn btn-outline-primary">+ Добавить событие</a>
+                    {% if request.user.is_authenticated %}
+                    <a href="{% url 'events:event_create' %}" class="btn btn-outline-primary">+ Добавить событие</a>
+                    {% else %}
+                    <a href="{% url 'events:login' %}" class="btn btn-outline-primary">Войти</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
