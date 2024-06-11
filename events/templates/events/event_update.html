@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 {% load static %}
+{% load custom_filters %}
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -181,6 +182,46 @@
                                         {{ form.logo.errors }}
                                         </div>
                                         {% endif %}
+
+                                        <div class="mb-3">
+                                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}:</label>
+                                            {{ form.description|add_attr:"class:form-control" }}
+                                        </div>
+                                        {% if form.description.errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.description.errors }}
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="mb-3">
+                                            <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}:</label>
+                                            {{ form.category|add_attr:"class:form-control" }}
+                                        </div>
+                                        {% if form.category.errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.category.errors }}
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="mb-3">
+                                            <label for="{{ form.features.id_for_label }}" class="form-label">{{ form.features.label }}:</label>
+                                            {{ form.features|add_attr:"class:form-control" }}
+                                        </div>
+                                        {% if form.features.errors %}
+                                        <div class="alert alert-danger">
+                                            {{ form.features.errors }}
+                                        </div>
+                                        {% endif %}
+
+                                         <div class="mb-3">
+                                                <label for="{{ form.date_start.id_for_label }}" class="form-label">Дата начала события:</label>
+                                                 {{ form.date_start|add_attr:"class:form-control" }}
+                                            </div>
+                                            {% if form.date_start.errors %}
+                                            <div class="alert alert-danger">
+                                                {{ form.date_start.errors }}
+                                            </div>
+                                            {% endif %}
                                         <button type="submit" class="btn btn-primary">
                                             Сохранить
                                         </button>

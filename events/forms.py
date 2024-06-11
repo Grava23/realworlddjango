@@ -10,17 +10,7 @@ from django.core.exceptions import ValidationError
 class EventUpdateForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ('title', 'is_private', 'logo')
-
-
-# class EventDetailForm(forms.ModelForm):
-#     rate = forms.IntegerField(label='Оценка', min_value=1, max_value=5)
-#     text = forms.CharField(label='Текст отзыва', widget=forms.Textarea)
-#     event = forms.IntegerField(widget=forms.HiddenInput())
-#
-#     class Meta:
-#         model = Review
-#         fields = ['rate', 'text', 'event']
+        fields = ('title', 'is_private', 'logo', 'description', 'date_start', 'participants_number', 'category', 'features')
 
 
 class EnrollForm(forms.ModelForm):
